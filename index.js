@@ -1,7 +1,8 @@
 const useParser = require("./parser");
 const {url, unnecessaryResources} = require("./constants");
+const priceToNumber = require("./priceToNumber");
 
 (async () => {
   const data = await useParser(url, unnecessaryResources)
-  console.log(data);
+  console.log(priceToNumber(data));
 })()
