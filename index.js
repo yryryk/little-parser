@@ -1,8 +1,13 @@
 const useParser = require("./parser");
 const {url, unnecessaryResources} = require("./constants");
-const priceToNumber = require("./priceToNumber");
+const modifyData = require("./modifyData");
+const writeInCsv = require("./csvWriter");
 
 (async () => {
-  const data = await useParser(url, unnecessaryResources)
-  console.log(priceToNumber(data));
+  try {
+    const result = await useParser(url, unnecessaryResources)
+    await writeInCsv(modifyData(result.data), result.title);
+  } catch (error) {
+    console.log(error);
+  }
 })()

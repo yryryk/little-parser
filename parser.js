@@ -4,9 +4,19 @@ const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 puppeteer.use(StealthPlugin());
 
 // вернуть массив с наименованием и ценой для товаров с текущей страницы
-const getNamesAndPrices = async (page, href, result = []) => {
-  await page.goto(href, {waitUntil: 'domcontentloaded'});
-  await page.waitForSelector('.catalog-product:last-child .product-buy__price');
+const getNamesAndPrices = async (
+  page,
+  href,
+  result = { data: [], title: "" },
+  title = false
+) => {
+  await page.goto(href, { waitUntil: "domcontentloaded" });
+  if (title) {
+    await page.waitForSelector(".title");
+    const title = await page.$eval(".title", (el) => el.textContent);
+    result.title = title;
+  }
+  await page.waitForSelector(".catalog-product:last-child .product-buy__price");
   const products = await page.$$(".catalog-products .catalog-product");
   const namesAndPrices = await Promise.all(
     products.map(async (el) => {
@@ -21,7 +31,8 @@ const getNamesAndPrices = async (page, href, result = []) => {
       return { name, price };
     })
   );
-  return [...result, ...namesAndPrices];
+  result.data = [...result.data, ...namesAndPrices];
+  return result;
 };
 
 // получить объект с элементами ссылок пагинации
@@ -34,7 +45,11 @@ const getPages = async (page) => {
   );
   const pages = await paginationElements.reduce(async (acc, el) => {
     const text = await el.evaluate((x) => x.textContent);
-    if (Number(text)) return { ...(await acc), [Number(text)]: await el.evaluate((x) => x.href) };
+    if (Number(text))
+      return {
+        ...(await acc),
+        [Number(text)]: await el.evaluate((x) => x.href),
+      };
     return await acc;
   }, {});
   return pages;
@@ -64,9 +79,9 @@ const useParser = async (url, unnecessaryResources) => {
       request.continue();
     });
 
-    let result = [];
+    let result = { data: [], title: "" };
 
-    result = await getNamesAndPrices(page, url.href, result);
+    result = await getNamesAndPrices(page, url.href, result, true);
 
     let pagesUrls = await getPages(page);
     const numberOfPages = Object.keys(pagesUrls).length;
@@ -77,8 +92,8 @@ const useParser = async (url, unnecessaryResources) => {
       }
     }
     return result;
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
   } finally {
     await browser.close();
   }
