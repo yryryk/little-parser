@@ -3,10 +3,10 @@ const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const writeInCsv = async (data, title) => {
   let date = new Date();
   const csvWriter = createCsvWriter({
-    path: `${title}-${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}-${date.getMinutes()}-${date.getSeconds()}.csv`,
+    path: `./src/${title}-${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}-${date.getMinutes()}-${date.getSeconds()}.csv`,
     header: [
       { id: "name", title: "наименование" },
-      { id: "price", title: "цена" },
+      { id: "price", title: "цена ₽" },
     ],
   });
   try {
