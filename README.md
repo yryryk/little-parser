@@ -21,4 +21,6 @@ Puppeteer<br/>
 
 ## Исправления
 
-Проведён рефакторинг в соответствии с: https://stackoverflow.com/questions/55664420/page-evaluate-vs-puppeteer-methods
+Проведён рефакторинг в соответствии с: https://stackoverflow.com/questions/55664420/page-evaluate-vs-puppeteer-methods <br/>
+
+Исправлен баг с режимом работы в ```headless: "New"```. Оказалось, что баг возникает только в безголовом режиме из-за использования ```const page = (await browser.pages())[0];``` вместо ```const page =  await browser.newPage();```, при том что в режиме ```headless: false``` всё работало.

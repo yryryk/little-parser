@@ -20,9 +20,9 @@ const getNamesAndPrices = async (
   }
   await page.waitForSelector(".catalog-product:last-child .product-buy__price");
   const namesAndPrices = await page.evaluate(() => {
-    const products = Array.from(document.querySelectorAll(
-      ".catalog-products .catalog-product"
-    ));
+    const products = Array.from(
+      document.querySelectorAll(".catalog-products .catalog-product")
+    );
     const namesAndPrices = products.map((el) => {
       const name = el.querySelector(".catalog-product__name").textContent;
       const price = el.querySelector(".product-buy__price").textContent;
@@ -40,13 +40,17 @@ const getPages = async (page) => {
     ".pagination-widget__pages .pagination-widget__page a"
   );
   const pages = await page.evaluate(() => {
-    const paginationElements = Array.from(document.querySelectorAll(".pagination-widget__pages .pagination-widget__page a"));
+    const paginationElements = Array.from(
+      document.querySelectorAll(
+        ".pagination-widget__pages .pagination-widget__page a"
+      )
+    );
     const pages = paginationElements.reduce((acc, el) => {
       const text = el.textContent;
       if (Number(text))
         return {
-          ...(acc),
-          [Number(text)]: el.href
+          ...acc,
+          [Number(text)]: el.href,
         };
       return acc;
     }, {});
@@ -62,12 +66,11 @@ const getPages = async (page) => {
 // вернуть массив с наименованием и ценой для всех товаров категории
 const useParser = async (url, unnecessaryResources) => {
   const browser = await puppeteer.launch({
-    // headless: "New",
-    headless: false,
+    headless: "New",
+    // headless: false,
   });
   try {
-    const page = (await browser.pages())[0];
-    await page.setViewport({ width: 1920, height: 1080 });
+    const page = await browser.newPage();
     page.setRequestInterception(true);
 
     page.on("request", (request) => {
@@ -84,12 +87,14 @@ const useParser = async (url, unnecessaryResources) => {
     let result = { data: [], title: "" };
 
     result = await getNamesAndPrices(page, url.href, result, true);
+    console.log("page 1");
 
     let pagesUrls = await getPages(page);
     const numberOfPages = Object.keys(pagesUrls).length;
 
     if (numberOfPages > 1) {
       for (let i = 2; i <= numberOfPages; i++) {
+        console.log(`page ${i}`);
         result = await getNamesAndPrices(page, pagesUrls[i], result);
       }
     }
