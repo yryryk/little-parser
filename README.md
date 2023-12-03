@@ -18,3 +18,7 @@ Puppeteer<br/>
 
 `npm i` — загружает зависимости<br/>
 `npm start` — запускает проект <br/> 
+
+## Исправления
+
+Проведён рефакторинг в соответствии с: https://stackoverflow.com/questions/55664420/page-evaluate-vs-puppeteer-methods

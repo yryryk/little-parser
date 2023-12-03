@@ -13,24 +13,23 @@ const getNamesAndPrices = async (
   await page.goto(href, { waitUntil: "domcontentloaded" });
   if (title) {
     await page.waitForSelector(".title");
-    const title = await page.$eval(".title", (el) => el.textContent);
+    const title = await page.evaluate(
+      () => document.querySelector(".title").textContent
+    );
     result.title = title;
   }
   await page.waitForSelector(".catalog-product:last-child .product-buy__price");
-  const products = await page.$$(".catalog-products .catalog-product");
-  const namesAndPrices = await Promise.all(
-    products.map(async (el) => {
-      const name = await el.$eval(
-        ".catalog-product__name",
-        (el) => el.textContent
-      );
-      const price = await el.$eval(
-        ".product-buy__price",
-        (el) => el.textContent
-      );
+  const namesAndPrices = await page.evaluate(() => {
+    const products = Array.from(document.querySelectorAll(
+      ".catalog-products .catalog-product"
+    ));
+    const namesAndPrices = products.map((el) => {
+      const name = el.querySelector(".catalog-product__name").textContent;
+      const price = el.querySelector(".product-buy__price").textContent;
       return { name, price };
-    })
-  );
+    });
+    return namesAndPrices;
+  });
   result.data = [...result.data, ...namesAndPrices];
   return result;
 };
@@ -40,18 +39,19 @@ const getPages = async (page) => {
   await page.waitForSelector(
     ".pagination-widget__pages .pagination-widget__page a"
   );
-  const paginationElements = await page.$$(
-    ".pagination-widget__pages .pagination-widget__page a"
-  );
-  const pages = await paginationElements.reduce(async (acc, el) => {
-    const text = await el.evaluate((x) => x.textContent);
-    if (Number(text))
-      return {
-        ...(await acc),
-        [Number(text)]: await el.evaluate((x) => x.href),
-      };
-    return await acc;
-  }, {});
+  const pages = await page.evaluate(() => {
+    const paginationElements = Array.from(document.querySelectorAll(".pagination-widget__pages .pagination-widget__page a"));
+    const pages = paginationElements.reduce((acc, el) => {
+      const text = el.textContent;
+      if (Number(text))
+        return {
+          ...(acc),
+          [Number(text)]: el.href
+        };
+      return acc;
+    }, {});
+    return pages;
+  });
   return pages;
 };
 
@@ -62,10 +62,12 @@ const getPages = async (page) => {
 // вернуть массив с наименованием и ценой для всех товаров категории
 const useParser = async (url, unnecessaryResources) => {
   const browser = await puppeteer.launch({
+    // headless: "New",
     headless: false,
   });
   try {
     const page = (await browser.pages())[0];
+    await page.setViewport({ width: 1920, height: 1080 });
     page.setRequestInterception(true);
 
     page.on("request", (request) => {
@@ -74,9 +76,9 @@ const useParser = async (url, unnecessaryResources) => {
         !request.url().includes(url.hostname.replace("www.", ""))
       ) {
         request.abort();
-        return;
+      } else {
+        request.continue();
       }
-      request.continue();
     });
 
     let result = { data: [], title: "" };
